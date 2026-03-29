@@ -30,8 +30,9 @@ public class UserLocationDao {
     }
 
     // 获取单个用户当天全部的历史轨迹数据
+    /*
     public List<UserLocation> getTodayLocationsByUser(String usercode) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now().minusDays(5);
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
 
@@ -39,6 +40,16 @@ public class UserLocationDao {
                 "WHERE usercode = ? AND create_time >= ? AND create_time < ? " +
                 "ORDER BY create_time ASC";
         return jdbcTemplate.query(sql, new Object[]{usercode, startOfDay, endOfDay},
+                new BeanPropertyRowMapper<>(UserLocation.class));
+    }
+     */
+    public List<UserLocation> getTodayLocationsByUser(String usercode) {
+        String sql = "SELECT id, usercode, longitude, latitude, create_time FROM user_location " +
+                "WHERE usercode = ? " +
+                "ORDER BY create_time ASC";
+
+        return jdbcTemplate.query(sql,
+                new Object[]{usercode},
                 new BeanPropertyRowMapper<>(UserLocation.class));
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 
-@CrossOrigin
+@CrossOrigin("*")
 @RestController
 @RequestMapping("/api")
 public class LocationController {
