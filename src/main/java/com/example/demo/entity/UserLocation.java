@@ -26,6 +26,9 @@ public class UserLocation {
     @TableField(exist = false)
     private String hj;
 
+    @TableField(exist = false)
+    private String address;
+
     public Long getId() {
         return id;
     }
@@ -96,5 +99,13 @@ public class UserLocation {
 
     public void setHj(String hj) {
         this.hj = hj;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 }
