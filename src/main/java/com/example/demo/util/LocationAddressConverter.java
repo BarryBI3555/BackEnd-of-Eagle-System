@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
+import java.lang.Thread;
 import java.util.List;
 
 @Component
@@ -45,6 +45,8 @@ public class LocationAddressConverter {
                 } else {
                     loc.setAddress(root.path("message").asText());
                 }
+
+                Thread.sleep(300); // 延迟300毫秒，防止每秒请求超限
 
             } catch (Exception e) {
                 loc.setAddress("解析异常");
