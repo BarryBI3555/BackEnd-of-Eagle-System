@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//MyBatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.GzlSsMapper">
+    <select id="list" resultType="com.example.demo.entity.GzlSs">
+         SELECT * FROM gzl_ss
+        <where>
+            <if test="queryTime != null and queryTime != ''">
+                AND stat_date = #{queryTime}
+            </if>
+        </where>
+    </select>
+</mapper>

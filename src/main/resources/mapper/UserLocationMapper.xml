@@ -5,7 +5,7 @@
     <!-- 自定义SQL：获取指定日期每个用户最新位置 -->
     <select id="getLatestLocationsByDate" resultType="com.example.demo.entity.UserLocation">
         SELECT a.id, a.usercode, a.longitude, a.latitude, a.create_time,
-               b.username, b.ckl, b.dsl, b.hj
+               b.username, b.ckl, b.dsl, b.hj, b.groups, b.groupscode
         FROM user_location a
                  LEFT JOIN acd_ryzd b ON a.usercode = b.usercode
         WHERE date(a.create_time) = #{dateStr}
