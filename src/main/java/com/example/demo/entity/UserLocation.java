@@ -20,7 +20,12 @@ public class UserLocation {
     @TableField(exist = false)
     private String username;
     @TableField(exist = false)
+    private String groups;
+    @TableField(exist = false)
+    private String groupscode;
+    @TableField(exist = false)
     private String ckl;
+
     @TableField(exist = false)
     private String dsl;
     @TableField(exist = false)
@@ -107,5 +112,20 @@ public class UserLocation {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getGroups() {
+        return groups;
+    }
+    public void setGroups(String groups) {
+        this.groups = groups;
+    }
+
+    public String getGroupscode() {
+        return groupscode;
+    }
+
+    public void setGroupscode(String groupscode) {
+        this.groupscode = groupscode;
     }
 }
