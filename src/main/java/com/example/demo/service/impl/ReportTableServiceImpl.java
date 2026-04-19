@@ -1,6 +1,7 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.entity.CurGzlTableRy;
+import com.example.demo.entity.CurGzlTableBm;
 import com.example.demo.mapper.ReportTableMapper;
 import com.example.demo.service.ReportTableService;
 import org.springframework.stereotype.Service;
@@ -22,4 +23,15 @@ public class ReportTableServiceImpl implements ReportTableService {
     public String getMaxTjDate() {
         return reportTableMapper.getMaxTjDate();
     }
+
+    @Override
+    public List<CurGzlTableBm> getCurGzlDataBm(String startDate, String endDate, String comName) {
+        return reportTableMapper.getCurGzlDataBm(startDate, endDate, comName);
+    }
+
+    @Override
+    public String getMaxTjDateBm() {
+        return reportTableMapper.getMaxTjDateBm();
+    }
+
 }

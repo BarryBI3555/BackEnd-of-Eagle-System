@@ -7,9 +7,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
-@TableName("acd_dangri_gzl_ry")
-public class CurGzlTableRy {
-    
+@TableName("acd_dangri_gzl_bm")
+public class CurGzlTableBm {
+
     @TableId(type = IdType.AUTO)
     private Long id;
 
@@ -18,52 +18,40 @@ public class CurGzlTableRy {
 
     @TableField("comname")
     private String comName; // 部门
-    
-    @TableField("username")
-    private String userName; // 人员
-    
-    @TableField("usercode")
-    private String userCode; // 用户编码
-    
-    @TableField("groups")
-    private String groups; // 小组
-    
-    @TableField("groupscode")
-    private String groupsCode; // 小组编码
-    
+
     @TableField("ck_jsl")
     private Integer ckJsl; // 查勘接收量
-    
+
     @TableField("ck_jsl_wcl")
     private Integer ckJslWcl; // 查勘接收完成数量
-    
+
     @TableField("ck_wcl")
     private Integer ckWcl; // 查勘完成量
-    
+
     @TableField("ds_tjl")
     private Integer dsTjl; // 定损提交量
-    
+
     @TableField("ds_wcl")
     private Integer dsWcl; // 定损完成量
-    
+
     @TableField("ds_zfl")
     private Integer dsZfl; // 定损支付量
-    
+
     @TableField("shougen")
     private Integer shouGen; // 首跟数量
-    
+
     @TableField("hougen")
     private Integer houGen; // 后跟数量
-    
+
     @TableField("tiaojie")
     private Integer tiaoJie; // 调解数量
-    
+
     @TableField("ja")
     private Integer ja; // 结案数量
-    
+
     @TableField("zl")
     private Integer zl; // 总量
-    
+
     @TableField("tjdate")
     private String tjDate; // 统计日期
 

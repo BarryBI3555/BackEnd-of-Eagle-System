@@ -34,4 +34,35 @@
           AND groupscode NOT IN ('5101701','5101702','5101703')
     </select>
 
+    <!-- ===================== 新表：部门统计 ===================== -->
+    <select id="getCurGzlDataBm" resultType="com.example.demo.entity.CurGzlTableBm">
+        SELECT a.comcode as comCode,
+        a.comname as comName,
+        max(a.tjtime) as maxTjTime,
+        sum(ck_jsl) as ckJsl,
+        sum(ck_jsl_wcl) as ckJslWcl,
+        sum(ck_wcl) as ckWcl,
+        sum(ds_tjl) as dsTjl,
+        sum(ds_wcl) as dsWcl,
+        sum(ds_zfl) as dsZfl,
+        sum(shougen) as shouGen,
+        sum(hougen) as houGen,
+        sum(tiaojie) as tiaoJie,
+        sum(ja) as ja,
+        sum(zl) as zl
+        FROM acd_dangri_gzl_bm a
+        WHERE a.tjdate &gt;= #{startDate}
+        AND a.tjdate &lt;= #{endDate}
+        <if test="comName != null and comName != ''">
+            AND a.comname like concat('%', #{comName}, '%')
+        </if>
+        GROUP BY 1,2
+        ORDER BY comName desc
+    </select>
+
+    <select id="getMaxTjDateBm" resultType="java.lang.String">
+        SELECT MAX(tjdate)
+        FROM acd_dangri_gzl_bm
+    </select>
+
 </mapper>
