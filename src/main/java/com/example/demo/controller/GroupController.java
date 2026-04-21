@@ -23,7 +23,7 @@ public class GroupController {
     @GetMapping("/locations/groups")
     
     public List<Group> getGroups() {
-        List<Group> allGroups = groupMapper.selectList(null);
+        List<Group> allGroups = groupMapper.selectAllGroups();
         // 根据groupscode去重
         Map<String, Group> groupMap = new LinkedHashMap<>();
         for (Group group : allGroups) {

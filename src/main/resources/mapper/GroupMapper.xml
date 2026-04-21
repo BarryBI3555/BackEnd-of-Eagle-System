@@ -3,7 +3,8 @@
 <mapper namespace="com.example.demo.mapper.GroupMapper">
     
     <select id="selectAllGroups" resultType="com.example.demo.entity.Group">
-        SELECT groups, groupscode FROM acd_ryzd
+        SELECT DISTINCT a.groups, a.groupscode FROM acd_ryzd a
     </select>
+    
     
 </mapper>

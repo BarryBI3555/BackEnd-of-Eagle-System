@@ -12,6 +12,15 @@
           AND (a.usercode, a.create_time) IN
             (SELECT usercode, MAX(create_time) FROM user_location
             WHERE date(create_time) = #{dateStr} GROUP BY usercode)
+        <if test="groupscode != null and groupscode != ''">
+            AND b.groupscode = #{groupscode}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+            b.username LIKE CONCAT("%", #{keyword}, "%")
+            OR a.usercode LIKE CONCAT("%", #{keyword}, "%")
+            )
+        </if>
     </select>
 
     <!-- 自定义SQL：获取指定日期用户轨迹 -->
