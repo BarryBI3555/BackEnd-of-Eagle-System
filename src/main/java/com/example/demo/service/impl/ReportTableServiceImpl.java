@@ -7,7 +7,7 @@ import com.example.demo.entity.CurGzlTableRs;
 import com.example.demo.mapper.ReportTableMapper;
 import com.example.demo.service.ReportTableService;
 import org.springframework.stereotype.Service;
-import jakarta.annotation.Resource;
+import javax.annotation.Resource;
 import java.util.List;
 
 @Service
