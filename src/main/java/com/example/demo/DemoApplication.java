@@ -4,10 +4,12 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
-@MapperScan("com.example.demo.mapper") // 扫描mapper包下的所有Mapper接口
+@MapperScan("com.example.demo.mapper")
+@EnableScheduling
 public class DemoApplication {
 
     public static void main(String[] args) {
