@@ -37,8 +37,14 @@ public class LocationAddressConverter {
                 Double lng = loc.getLongitude();
                 Double lat = loc.getLatitude();
 
-                if (lng == null || lat == null) {
+                if (lng == null || lat == null || Double.isNaN(lng) || Double.isNaN(lat)) {
                     loc.setAddress("坐标无效");
+                    continue;
+                }
+
+                // 验证坐标范围（中国地区大致范围）
+                if (lng < 73 || lng > 135 || lat < 3 || lat > 53) {
+                    loc.setAddress("坐标范围无效");
                     continue;
                 }
 
@@ -67,13 +73,13 @@ public class LocationAddressConverter {
                 }
                 loc.setAddress(address);
 
-                Thread.sleep(300); // 延迟300毫秒，防止每秒请求超限
-
-            } catch (Exception e) {
+                    Thread.sleep(300); // 延迟300毫秒，防止每秒请求超限
+                
+                } catch (Exception e) {
                 loc.setAddress("解析异常");
                 e.printStackTrace();
+                }
             }
-        }
         return locationList;
     }
 
