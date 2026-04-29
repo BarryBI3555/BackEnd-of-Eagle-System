@@ -49,17 +49,46 @@ public class MapProxyController {
             
            
             String responseBody = response.getBody();
-            // //  处理响应内容，确保不暴露API密钥
+            
+            // 替换脚本中的腾讯地图域名为本地代理地址
             // if (responseBody != null) {
-            //     // 移除可能包含API密钥的内容
-            //     responseBody = responseBody.replace(apiKey, "[API_KEY_REMOVED]");
+            //     responseBody = responseBody
+            //         // API 服务域名
+            //         // .replace("apis.map.qq.com", "localhost:8080/api/map/proxy/apis.map.qq.com")
+            //         // .replace("map.qq.com", "localhost:8080/api/map/proxy/map.qq.com")
+            //         // .replace("mapapi.qq.com", "localhost:8080/api/map/proxy/mapapi.qq.com")
+            //         .replace("overseactrl.qq.com", "localhost:8080/api/map/proxy/overseactrl.qq.com")
+            //         .replace("s.map.qq.com", "localhost:8080/api/map/proxy/s.map.qq.com")
+            //         .replace("sv.map.qq.com", "localhost:8080/api/map/proxy/sv.map.qq.com")
+            //         .replace("lbs.qq.com", "localhost:8080/api/map/proxy/lbs.qq.com")
+            //         .replace("shp.qq.com", "localhost:8080/api/map/proxy/shp.qq.com")
+            //         // 地图瓦片域名
+            //         // .replace("rt0.map.gtimg.com", "localhost:8080/api/map/tiles/rt0.map.gtimg.com")
+            //         // .replace("rt1.map.gtimg.com", "localhost:8080/api/map/tiles/rt1.map.gtimg.com")
+            //         // .replace("rt2.map.gtimg.com", "localhost:8080/api/map/tiles/rt2.map.gtimg.com")
+            //         // .replace("rt3.map.gtimg.com", "localhost:8080/api/map/tiles/rt3.map.gtimg.com")
+            //         .replace("p0.map.gtimg.com", "localhost:8080/api/map/tiles/p0.map.gtimg.com")
+            //         .replace("p1.map.gtimg.com", "localhost:8080/api/map/tiles/p1.map.gtimg.com")
+            //         .replace("p2.map.gtimg.com", "localhost:8080/api/map/tiles/p2.map.gtimg.com")
+            //         .replace("p3.map.gtimg.com", "localhost:8080/api/map/tiles/p3.map.gtimg.com")
+            //         .replace("p4.map.gtimg.com", "localhost:8080/api/map/tiles/p4.map.gtimg.com")
+            //         .replace("p5.map.gtimg.com", "localhost:8080/api/map/tiles/p5.map.gtimg.com")
+            //         .replace("p6.map.gtimg.com", "localhost:8080/api/map/tiles/p6.map.gtimg.com")
+            //         .replace("p7.map.gtimg.com", "localhost:8080/api/map/tiles/p7.map.gtimg.com")
+            //         // 图片服务域名
+            //         .replace("pr.map.qq.com", "localhost:8080/api/map/images/pr.map.qq.com")
+            //         .replace("3gimg.qq.com", "localhost:8080/api/map/images/3gimg.qq.com")
+            //         .replace("4gimg.qq.com", "localhost:8080/api/map/images/4gimg.qq.com")
+            //         // 3G/4G 地图服务
+            //         .replace("3g.map.qq.com", "localhost:8080/api/map/proxy/3g.map.qq.com")
+            //         .replace("4g.map.qq.com", "localhost:8080/api/map/proxy/4g.map.qq.com");
             // }
             
             // 设置响应头
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.parseMediaType("application/javascript; charset=UTF-8"));
             responseHeaders.setCacheControl("public, max-age=3600"); // 缓存1小时
-
+            
             return new ResponseEntity<>(responseBody, responseHeaders, HttpStatus.OK);
             
         } catch (Exception e) {
