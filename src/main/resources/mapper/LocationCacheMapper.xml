@@ -8,4 +8,20 @@
     <select id="findValidByCoordinates" resultType="com.example.demo.entity.LocationCache">
         SELECT * FROM location_cache WHERE ROUND(longitude, 3) = ROUND(#{longitude}, 3) AND ROUND(latitude, 3) = ROUND(#{latitude}, 3) AND (expire_time IS NULL OR expire_time > #{currentTime})
     </select>
+    
+    <select id="findByAddress" resultType="com.example.demo.entity.LocationCache">
+        SELECT * FROM location_cache WHERE address = #{address}
+    </select>
+    
+    <select id="findValidByAddress" resultType="com.example.demo.entity.LocationCache">
+        SELECT * FROM location_cache WHERE address = #{address} AND (expire_time IS NULL OR expire_time > #{currentTime})
+    </select>
+    
+    <select id="findByAddressLike" resultType="com.example.demo.entity.LocationCache">
+        SELECT * FROM location_cache WHERE address LIKE #{addressPattern}
+    </select>
+    
+    <select id="findValidByAddressLike" resultType="com.example.demo.entity.LocationCache">
+        SELECT * FROM location_cache WHERE address LIKE #{addressPattern} AND (expire_time IS NULL OR expire_time > #{currentTime})
+    </select>
 </mapper>

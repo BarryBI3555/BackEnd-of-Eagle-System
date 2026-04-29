@@ -1,5 +1,6 @@
 package com.example.demo.util;
 
+import com.example.demo.entity.GeocodeResult;
 import com.example.demo.entity.LocationCache;
 import com.example.demo.entity.UserLocation;
 import com.example.demo.mapper.LocationCacheMapper;
@@ -285,5 +286,262 @@ public class LocationAddressConverter {
         BigDecimal bd = new BigDecimal(value);
         bd = bd.setScale(decimalPlaces, RoundingMode.HALF_UP);
         return bd.doubleValue();
+    }
+
+    /**
+     * 正向地理编码：将地址转换为经纬度坐标
+     * @param address 地址（建议包含城市名称）
+     * @return GeocodeResult 包含坐标信息的结果对象
+     */
+    public GeocodeResult geocode(String address) {
+        if (address == null || address.trim().isEmpty()) {
+            GeocodeResult result = new GeocodeResult();
+            result.setStatus(-1);
+            result.setMessage("地址不能为空");
+            return result;
+        }
+
+        // ====================== 先查询缓存（精确匹配） ======================
+        LocationCache cache = locationCacheMapper.findValidByAddress(address, formatDate(LocalDateTime.now()));
+        if (cache != null) {
+            logger.debug("从缓存中获取地址坐标(精确匹配): address={}, lat={}, lng={}", address, cache.getLatitude(), cache.getLongitude());
+            return buildResultFromCache(address, cache);
+        }
+        
+        // ====================== 尝试模糊查询（提取成都或四川省开始的9个字） ======================
+        String fuzzyKey = extractFuzzyKey(address);
+        if (fuzzyKey != null) {
+            String addressPattern = "%" + fuzzyKey + "%";
+            cache = locationCacheMapper.findValidByAddressLike(addressPattern, formatDate(LocalDateTime.now()));
+            if (cache != null) {
+                logger.debug("从缓存中获取地址坐标(模糊匹配): address={}, fuzzyKey={}, lat={}, lng={}", address, fuzzyKey, cache.getLatitude(), cache.getLongitude());
+                return buildResultFromCache(address, cache);
+            }
+        }
+
+        int retryCount = 0;
+        int maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+            try {
+                // 等待速率限制
+                waitForRateLimit();
+                
+                // URL编码地址
+                String encodedAddress = java.net.URLEncoder.encode(address, "UTF-8");
+                
+                // 构建请求URL
+                String url = tencentMapDomain + "/ws/geocoder/v1/"
+                        + "?address=" + encodedAddress
+                        + "&key=" + tencentMapKey
+                        + "&policy=1"    // 宽松模式，允许地址中缺失城市
+                        + "&output=json";
+
+                logger.debug("发送正向地理编码请求: address={}", address);
+                String jsonResp = restTemplate.getForObject(url, String.class);
+                JsonNode root = objectMapper.readTree(jsonResp);
+
+                GeocodeResult result = new GeocodeResult();
+                int status = root.path("status").asInt();
+                result.setStatus(status);
+                result.setMessage(root.path("message").asText());
+                result.setRequestId(root.path("request_id").asText());
+
+                // 请求成功后增加计数
+                int count = requestCount.incrementAndGet();
+                logger.debug("已发送第 {} 个请求", count);
+
+                if (status == 0) {
+                    JsonNode resultNode = root.path("result");
+                    
+                    GeocodeResult.Result resultData = new GeocodeResult.Result();
+                    resultData.setTitle(resultNode.path("title").asText());
+                    resultData.setReliability(resultNode.path("reliability").asInt());
+                    resultData.setLevel(resultNode.path("level").asInt());
+
+                    // 解析坐标
+                    JsonNode locationNode = resultNode.path("location");
+                    GeocodeResult.Location location = new GeocodeResult.Location();
+                    location.setLat(locationNode.path("lat").asDouble());
+                    location.setLng(locationNode.path("lng").asDouble());
+                    resultData.setLocation(location);
+
+                    // 解析地址部件
+                    JsonNode addressComponentsNode = resultNode.path("address_components");
+                    GeocodeResult.AddressComponents addressComponents = new GeocodeResult.AddressComponents();
+                    addressComponents.setProvince(addressComponentsNode.path("province").asText());
+                    addressComponents.setCity(addressComponentsNode.path("city").asText());
+                    addressComponents.setDistrict(addressComponentsNode.path("district").asText());
+                    addressComponents.setStreet(addressComponentsNode.path("street").asText());
+                    addressComponents.setStreetNumber(addressComponentsNode.path("street_number").asText());
+                    resultData.setAddressComponents(addressComponents);
+
+                    // 解析行政区划信息
+                    JsonNode adInfoNode = resultNode.path("ad_info");
+                    GeocodeResult.AdInfo adInfo = new GeocodeResult.AdInfo();
+                    adInfo.setAdcode(adInfoNode.path("adcode").asText());
+                    resultData.setAdInfo(adInfo);
+
+                    result.setResult(resultData);
+                    logger.debug("正向地理编码成功: lat={}, lng={}", location.getLat(), location.getLng());
+                    
+                    // ====================== 将结果存入缓存 ======================
+                    saveAddressToCache(address, location.getLng(), location.getLat());
+                    
+                    return result;
+                } else {
+                    logger.warn("正向地理编码返回错误: status={}, message={}", status, result.getMessage());
+                    return result;
+                }
+                
+            } catch (Exception e) {
+                retryCount++;
+                logger.error("正向地理编码异常（重试 {}/{}）: {}", retryCount, maxRetries, e.getMessage());
+                
+                if (retryCount >= maxRetries) {
+                    GeocodeResult result = new GeocodeResult();
+                    result.setStatus(-2);
+                    result.setMessage("解析异常: " + e.getMessage());
+                    return result;
+                } else {
+                    // 指数退避等待
+                    long waitTime = (long) Math.pow(2, retryCount) * 1000;
+                    logger.info("等待 {} ms 后重试", waitTime);
+                    try {
+                        Thread.sleep(waitTime);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        GeocodeResult result = new GeocodeResult();
+                        result.setStatus(-3);
+                        result.setMessage("请求被中断");
+                        return result;
+                    }
+                }
+            }
+        }
+
+        // 不应该到达这里
+        GeocodeResult result = new GeocodeResult();
+        result.setStatus(-99);
+        result.setMessage("未知错误");
+        return result;
+    }
+
+    /**
+     * 将正向地理编码结果存入缓存
+     * @param address 地址
+     * @param longitude 经度
+     * @param latitude 纬度
+     */
+    private void saveAddressToCache(String address, Double longitude, Double latitude) {
+        try {
+            // 先检查是否已存在
+            LocationCache existingCache = locationCacheMapper.findByAddress(address);
+            if (existingCache != null) {
+                // 更新缓存
+                existingCache.setLongitude(longitude);
+                existingCache.setLatitude(latitude);
+                existingCache.setUpdateTime(formatDate(LocalDateTime.now()));
+                existingCache.setExpireTime(formatDate(LocalDateTime.now().plusDays(180)));
+                locationCacheMapper.updateById(existingCache);
+                logger.debug("更新缓存: address={}", address);
+            } else {
+                // 插入新缓存
+                LocationCache cache = new LocationCache();
+                cache.setAddress(address);
+                cache.setLongitude(longitude);
+                cache.setLatitude(latitude);
+                cache.setCreateTime(formatDate(LocalDateTime.now()));
+                cache.setUpdateTime(formatDate(LocalDateTime.now()));
+                cache.setExpireTime(formatDate(LocalDateTime.now().plusDays(180)));
+                locationCacheMapper.insert(cache);
+                logger.debug("插入缓存: address={}", address);
+            }
+        } catch (Exception e) {
+            logger.error("缓存写入失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 从缓存构建GeocodeResult结果
+     */
+    private GeocodeResult buildResultFromCache(String address, LocationCache cache) {
+        GeocodeResult result = new GeocodeResult();
+        result.setStatus(0);
+        result.setMessage("ok");
+        result.setRequestId("cache");
+        
+        GeocodeResult.Result resultData = new GeocodeResult.Result();
+        resultData.setTitle(address);
+        resultData.setReliability(10);
+        resultData.setLevel(10);
+        
+        GeocodeResult.Location location = new GeocodeResult.Location();
+        location.setLat(cache.getLatitude());
+        location.setLng(cache.getLongitude());
+        resultData.setLocation(location);
+        
+        result.setResult(resultData);
+        return result;
+    }
+
+    /**
+     * 提取模糊查询关键字：从"成都"或"四川省"开始取9个字
+     * @param address 原始地址
+     * @return 提取的关键字（最多9个字），如果不包含成都或四川省则返回null
+     */
+    private String extractFuzzyKey(String address) {
+        if (address == null || address.length() < 2) {
+            return null;
+        }
+        
+        int startIndex = -1;
+        int extractLength = 9; // 默认取9个字
+        
+        // 优先匹配"四川省"（3个字），取12字
+        if (address.contains("四川省")) {
+            startIndex = address.indexOf("四川省");
+            extractLength = 12;
+        } 
+        // 其次匹配"成都"（2个字），取9字
+        else if (address.contains("成都")) {
+            startIndex = address.indexOf("成都");
+            extractLength = 9;
+        }
+        
+        if (startIndex == -1) {
+            return null;
+        }
+        
+        // 从匹配位置开始取指定长度的字
+        int endIndex = Math.min(startIndex + extractLength, address.length());
+        return address.substring(startIndex, endIndex);
+    }
+
+    /**
+     * 批量正向地理编码
+     * @param addresses 地址列表
+     * @return GeocodeResult列表
+     */
+    public List<GeocodeResult> geocodeBatch(List<String> addresses) {
+        if (addresses == null || addresses.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<GeocodeResult> results = new ArrayList<>();
+
+        // 去重
+        Set<String> processedAddresses = new LinkedHashSet<>(addresses);
+        List<String> uniqueAddresses = new ArrayList<>(processedAddresses);
+
+        logger.info("开始批量正向地理编码，共 {} 个唯一地址", uniqueAddresses.size());
+
+        for (String address : uniqueAddresses) {
+            GeocodeResult result = geocode(address);
+            results.add(result);
+        }
+
+        logger.info("批量正向地理编码完成");
+        return results;
     }
 }

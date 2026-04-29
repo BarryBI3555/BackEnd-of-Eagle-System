@@ -33,4 +33,12 @@
         ORDER BY a.create_time ASC
     </select>
 
+    <!-- 自定义SQL：获取所有位置按时间排序 -->
+    <select id="getAllLocationsOrderByTime" resultType="com.example.demo.entity.UserLocation">
+        SELECT id, usercode, longitude, latitude, create_time
+        FROM user_location
+        WHERE date(create_time) = #{dateStr}
+        ORDER BY create_time ASC
+    </select>
+
 </mapper>

@@ -2,19 +2,16 @@ package com.example.demo.controller;
 
 
 import com.example.demo.entity.UserLocation;
-import com.example.demo.mapper.GroupMapper;
 import com.example.demo.service.UserLocationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
 
 
 @CrossOrigin("*")
@@ -24,9 +21,6 @@ public class LocationController {
 
     @Autowired
     private UserLocationService userLocationService;
-
-    
-
 
     @GetMapping("/locations")
     public List<UserLocation> getLocations() {
@@ -53,9 +47,5 @@ public class LocationController {
         LocalDate queryDate = date == null ? LocalDate.now() : LocalDate.parse(date);
         return userLocationService.getUserLocationsByDate(usercode, queryDate);
     }
-
-   
-
-    
 
 }

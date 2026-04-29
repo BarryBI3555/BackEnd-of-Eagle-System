@@ -20,4 +20,7 @@ public interface UserLocationMapper extends BaseMapper<UserLocation> {
 
     // ====================== 获取指定日期用户轨迹（也返回姓名） ======================
     List<UserLocation> getUserLocationsByDate(@Param("usercode") String usercode, @Param("dateStr") String dateStr);
+
+    // ====================== 获取指定日期所有位置按时间排序 ======================
+    // List<UserLocation> getAllLocationsOrderByTime(@Param("dateStr") String dateStr);
 }

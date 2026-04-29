@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -13,16 +14,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
-
-
 @CrossOrigin("*")
 @RestController
 @RequestMapping("/api")
 public class AdministrativeRegionController {
-    // ====================== 腾讯地图获取行政区划json ======================
-    
 
-     @Autowired
+    @Autowired
     private RestTemplate restTemplate;
 
     @Value("${tencent.map.key}")
@@ -38,8 +35,11 @@ public class AdministrativeRegionController {
     @GetMapping("/map/geocoder")
     public Object getGeocoder(@RequestParam String location) {
         try {
-            String url = mapDomain + "ws/geocoder/v1/?location=" + location + "&key=" + tencentMapKey;
-            return restTemplate.getForObject(url, Object.class);
+            String url = apiDomain + "ws/geocoder/v1/?location=" + location + "&key=" + tencentMapKey;
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            // 尝试解析为JSON，失败则返回原始字符串
+            return parseResponse(response.getBody());
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("status", 500);
@@ -48,11 +48,10 @@ public class AdministrativeRegionController {
         }
     }
 
-    //获取城市名称
+    // 获取城市名称
     @GetMapping("/map/district/search")
     public Object getDistrictname(@RequestParam(required = false) String keyword) {
         try {
-            // 参数校验
             if (keyword == null || keyword.trim().isEmpty() || keyword.equals("undefined")) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("status", 400);
@@ -60,8 +59,10 @@ public class AdministrativeRegionController {
                 return error;
             }
             
-            String url = apiDomain + "ws/district/v1/search?key=" + tencentMapKey + "&keyword=" + keyword + "&get_polygon=2&max_offset=100";
-            return restTemplate.getForObject(url, Object.class);
+            String url = apiDomain + "ws/district/v1/search?key=" + tencentMapKey + "&keyword=" + keyword;
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            return parseResponse(response.getBody());
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("status", 500);
@@ -70,12 +71,10 @@ public class AdministrativeRegionController {
         }
     }
 
-
     // 获取下级行政区划
     @GetMapping("/map/district/getchildren")
     public Object getDistrictChildren(@RequestParam(required = false) String id) {
         try {
-            // 参数校验
             if (id == null || id.trim().isEmpty() || id.equals("undefined")) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("status", 400);
@@ -84,7 +83,9 @@ public class AdministrativeRegionController {
             }
             
             String url = apiDomain + "ws/district/v1/getchildren?key=" + tencentMapKey + "&id=" + id + "&get_polygon=2&max_offset=100";
-            return restTemplate.getForObject(url, Object.class);
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            return parseResponse(response.getBody());
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("status", 500);
@@ -93,4 +94,34 @@ public class AdministrativeRegionController {
         }
     }
     
+    /**
+     * 解析响应内容，尝试转换为JSON对象
+     */
+    private Object parseResponse(String responseBody) {
+        if (responseBody == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("status", 500);
+            error.put("message", "响应内容为空");
+            return error;
+        }
+        
+        // 检查是否为JSON格式
+        if (responseBody.trim().startsWith("{")) {
+            try {
+                // 使用Jackson解析JSON
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                return mapper.readValue(responseBody, Object.class);
+            } catch (Exception e) {
+                // 解析失败，返回原始字符串
+                return responseBody;
+            }
+        } else {
+            // 不是JSON格式，返回错误信息
+            Map<String, Object> error = new HashMap<>();
+            error.put("status", 500);
+            error.put("message", "API返回非JSON格式数据");
+            error.put("rawResponse", responseBody);
+            return error;
+        }
+    }
 }
