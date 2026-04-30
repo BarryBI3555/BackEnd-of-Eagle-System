@@ -1,8 +1,11 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.entity.AcdCwTbCll;
 import com.example.demo.entity.GeocodeResult;
 import com.example.demo.entity.HeatData;
 import com.example.demo.entity.PrplCheckTask;
+import com.example.demo.entity.StatsCardData;
+import com.example.demo.mapper.AcdCwTbCllMapper;
 import com.example.demo.mapper.PrplCheckTaskMapper;
 import com.example.demo.service.HotmapService;
 import com.example.demo.util.LocationAddressConverter;
@@ -24,6 +27,9 @@ public class HotmapServiceImpl implements HotmapService {
 
     @Autowired
     private PrplCheckTaskMapper prplCheckTaskMapper;
+
+    @Autowired
+    private AcdCwTbCllMapper acdCwTbCllMapper;
 
     @Autowired
     private LocationAddressConverter addressConverter;
@@ -88,5 +94,52 @@ public class HotmapServiceImpl implements HotmapService {
         }
 
         return heatDataList;
+    }
+
+    @Override
+    public List<StatsCardData> getStatsCardsData(LocalDate date){
+        List<StatsCardData> result = new ArrayList<>();
+
+        try {
+            // 查询统计数据
+                AcdCwTbCll data = acdCwTbCllMapper.selectByDate(date);
+
+            if (data != null) {
+                logger.info("获取统计数据成功: date={}", 
+                        date);
+
+                // 当日新增立案量
+                result.add(new StatsCardData("新增立案", 
+                        data.getXzlDay() != null ? data.getXzlDay() : 0, 
+                        "当日新增立案量"));
+
+                // 当日已决量
+                result.add(new StatsCardData("已决案件", 
+                        data.getYjlDay() != null ? data.getYjlDay() : 0, 
+                        "当日已决量"));
+
+                // 未决量
+                result.add(new StatsCardData("未决案件", 
+                        data.getWjl() != null ? data.getWjl() : 0, 
+                        "截止统计日期未决量"));
+                } else {
+                logger.warn("未找到统计数据: date={}", date);
+                
+                // 返回默认空数据
+                result.add(new StatsCardData("新增立案", 0, "当日新增立案量"));
+                result.add(new StatsCardData("已决案件", 0, "当日已决量"));
+                result.add(new StatsCardData("未决案件", 0, "截止统计日期未决量"));
+            }
+        } catch (Exception e) {
+            logger.error("获取统计卡片数据失败: date={}, {}", 
+                        date, e.getMessage());
+            
+            // 返回默认空数据
+            result.add(new StatsCardData("新增立案", 0, "当日新增立案量"));
+            result.add(new StatsCardData("已决案件", 0, "当日已决量"));
+            result.add(new StatsCardData("未决案件", 0, "截止统计日期未决量"));
+        }
+
+        return result;
     }
 }

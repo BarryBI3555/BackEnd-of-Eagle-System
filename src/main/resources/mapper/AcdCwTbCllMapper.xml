@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.AcdCwTbCllMapper">
+
+    <select id="selectByDate" resultType="com.example.demo.entity.AcdCwTbCll">
+        SELECT 
+            tjdate,
+            comcode,
+            comname,
+            xzl_day AS xzlDay,
+            yjl_day AS yjlDay,
+            wjl
+        FROM acd_cw_tb_cll
+        WHERE tjdate = #{date}
+          AND comcode = '510100'
+    </select>
+
+</mapper>
